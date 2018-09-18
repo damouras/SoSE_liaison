@@ -1,0 +1,352 @@
+---
+title: "The Status of Statistics Education in Canada"
+author: "Sotirios Damouras & Sohee Kang"
+output:
+  html_document:
+    fig_caption: yes
+institute: University of Toronto Scarborough
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+library(tidyverse)
+# source("./Scripts/load data.R")  # run once to load data and save in all_data.RData
+load("all_data.RData")
+
+theme_set(theme_bw()); 
+theme_update(axis.title = element_text(size=10),
+             axis.text = element_text(size=10),
+             plot.title = element_text(size = 13, face = "bold"),
+             legend.title = element_text(size = 10),
+             legend.text = element_text(size = 10)
+)
+
+gls=1.2 # geom_line(size=gls)
+gps = 3 # geom_point(size=gps)
+
+```
+
+### Introduction
+
+The purpose of this report is twofold: a) to present summative data on post-secondary statistics education, and b) to examine the structure of undergraduate statistics programs in Canada. This information is important for planning and designing statistical curricula, and is of particular interest to educators, administrators, and other stakeholders. In the following sections, we describe our data in more detail and present results along our two lines of inquiry. We conclude with a discussion of our findings and their implications for directing future efforts in statistics education. An earlier version of this report was presented in a contributed session at the 2017 SSC Annual Meeting. 
+
+### Data Sources 
+
+#### Student Data 
+
+Student data come from Statistics Canada's (StatCan) Post-secondary Student Information System (PSIS)^[http://www23.statcan.gc.ca/imdb/p2SV.pl?Function=getSurvey&SDDS=5017], a national survey of Canadian public post-secondary institutions. PSIS collects data on enrolments and graduates, classified by degree, program of study, and other geographic and demographic information. PSIS data are publicly available^[For enrolments: https://open.canada.ca/data/en/dataset/f4ee8c35-ac77-4b12-ace8-b6d8e0908eb1, and graduates: https://open.canada.ca/data/en/dataset/e7150d2d-63ee-42af-ae00-9914cf69a496 ] across broad areas of study; for example, we also looked at data across all programs in Mathematics, Computer and Information Sciences (MCIS) for comparison. For statistics programs, we extracted PSIS data down at the program level through StatCan's Real-Time Remote Access^[https://www.statcan.gc.ca/eng/rtra/rtra] (RTRA) system, available through our institution's data library. Specifically, we looked at three types of programs: a) Biostatistics, b) General Statistics, and c) Mathematical Statistics and Probability, corresponding to the program classification^[http://www.statcan.gc.ca/eng/subjects/standard/cip/2011/index] used by StatCan. Our student data consist of enrolment and graduate numbers spanning the academic years 2010/11 to 2015/16, organized by the following variables:
+
+* YEAR: Academic year, from 2010 to 2015 (2010 corresponds to 2010/11 academic year, etc.)
+* PROGRAM: Type of program, one of _Biostatistics, General Statistics, Mathematical Statistics and Probability_
+* LEVEL: Degree level, one of _BSc, MSc, PhD_
+* REGION: Region/province of Canada, one of _Atlantic (NB/NL/NS/PE), QC, ON, Prairies, BC_ 
+* SEX: Student's sex, one of _Female, Male_ 
+
+#### Program Data
+Data on statistics curricula come from the academic calendars of Canadian universities for the 2016/17 academic year. We collected information on undergraduate Statistics programs satisfying two criteria: a) the program focuses primarily on Statistics (i.e. excludes Biostatistics, Mathematical/Business Statistics, or Actuarial Science), and b) it is a 4-year program, i.e what is typically called an Honors or Specialist BSc program. These programs are typically stand-alone and do not need to be combined with another program (as in a double major) to lead to a degree. In total, 24 programs satisfied our conditions for inclusion in the study. Programs are expressed as collections of course requirements, and our basic data unit are individual course requirements. For each course requirement, we recorded the following information:
+
+* DISCIPLINE: Discipline that offers course requirement, one or more of _Computer Science, Mathematics, Statistics, Other_
+* LEVEL: Year of study that course requirement is typically taken, one or more of _1, 2, 3, 4_
+* CREDIT: Number of course credits, _1 credit = 1 semester course_
+* TYPE: Type of course requirement, one of _Core, Elective_ 
+* TOPIC CATEGORY: Categorization of content, one or more of _Computation, Mathematics, Probability, Statistical Methodology, Statistical Practice, Statistical Theory, Other_ 
+
+The first four variables are objective, whereas the final categorization is subjective, based on our interpretation of the calendar description for the course. Certain requirements were expressed in terms of sets of courses (e.g. 3 credits from 3rd or 4th year Mathematics or Statistics courses). For the analysis, we distributed the credits from such requirements evenly among the possible values. The program data as well as the R scripts used for generating this report are available on GitHub^[https://github.com/damouras/SoSE_liaison].
+
+### Results 
+
+#### Student Data
+
+We now present "vital statistics" on statistics education, i.e. information on the number of students who enter and complete statistics programs in Canada. Below are time series plots of total enrolments and graduates^[^Values for 2015 are rounded to a hundred, due to RTRA's controlled rounding system.] in Statistics programs, broken down by degree level . Obviously, there is rapid growth in enrolments at all levels, measuring around 20% in the two most recent available years. This growth is also reflected in the number of awarded BSc degrees, although with some lag. Relative differences between enrolments and graduates are due, among other things, to the different lengths of the degrees: MSc programs are typically much shorter than BSc or PhD programs.
+
+
+
+
+
+```{r enrolgrad, echo=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+enrol %>% 
+  filter( PROGRAM %in% c("Biostats", "Stats, Gen", "Math-Stats & Prob"), 
+          YEAR >= 2010 ) %>% 
+  group_by(YEAR,LEVEL) %>% summarise(ENROLMENTS=sum(ENROLMENTS)) %>% 
+  ggplot(aes(x=YEAR,y=ENROLMENTS, col=LEVEL, shape=LEVEL)) + geom_line(size=gls) + geom_point(size=gps) + 
+  scale_y_continuous(limits=c(0,2500)) + ggtitle("Stats Enrolments by Year & Level")
+
+grad %>% 
+  filter( PROGRAM %in% c("Biostats", "Stats, Gen", "Math-Stats & Prob",  "Stats, Othr"), 
+          YEAR >= 2010 ) %>% 
+  group_by(YEAR,LEVEL) %>% summarise(GRADUATES=sum(GRADUATES)) %>% 
+  ggplot(aes(x=YEAR,y=GRADUATES, col=LEVEL, shape=LEVEL)) + geom_line(size=gls) + geom_point(size=gps) + 
+  scale_y_continuous(limits=c(0,500)) + ggtitle("Stats Graduates by Year & Level") + labs(y="GRADUATES") 
+```
+
+We compare Statistics with its parent group of programs in Mathematics, Computer & Information Sciences (MCIS). The corresponding time series plots are presented below. Statistics is included in the MCIS grouping, and constitutes from 5 to 10% of awarded degrees at different levels. Nevertheless, Statistics BSc enrolments seem to grow faster than MCIS, the latter increasing by around 10% in recent years. If Statistics enrolments continue to grow at twice this rate, the discipline will soon make up a bigger part of this group.   
+
+```{r MCIS, echo=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+# MCIS Enrol TS
+enrol_all %>%
+  filter( PROGRAM == "MCIS") %>%
+  group_by(YEAR, LEVEL) %>% summarise(ENROLMENTS = sum(ENROLMENTS)) %>% ungroup() %>%
+  ggplot(aes(x=YEAR,y=ENROLMENTS, col=LEVEL, shape=LEVEL)) + geom_line(size=gls) + geom_point(size=gps) + 
+  scale_y_continuous(limits=c(0,40000)) + ggtitle("MCIS Enrolments by Year & Level") 
+
+# MCIS Grad TS
+grad_all %>%
+  filter( PROGRAM == "MCIS") %>%
+  group_by(YEAR, LEVEL) %>% summarise(GRADUATES = sum(GRADUATES, na.rm = TRUE )) %>% ungroup()  %>%
+  ggplot(aes(x=YEAR,y=GRADUATES, col=LEVEL, shape=LEVEL)) + geom_line(size=gls) + geom_point(size=gps) + 
+  scale_y_continuous(limits=c(0,6000)) + ggtitle("MCIS Graduates by Year & Level") 
+
+```
+
+We also compare the number of Statistics graduates in Canada to those from the United States (US). US data come from the Integrated Post-secondary Education Data System (IPEDS) that is conducted by the Department of Education's National Center for Education Statistics (NCES)^[https://ncsesdata.nsf.gov/webcaspar/index.jsp?subHeader=WebCASPARHome]. The ratio of Statistics degrees in Canada vs the US is comparable to the ratio of their populations (14% vs 11%). The most important difference is qualitative: the majority of degrees in the US are at the MSc level, almost twice as many as at the BSc level. In Canada the situation is reversed: the majority of statistics graduates come from the BSc level. This places particular emphasis on undergraduate statistics education in Canada, as the majority of statisticians enter the profession with a BSc degree.
+
+```{r USgrad, echo=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+grad_us %>% 
+  filter( PROGRAM %in% c("Biostats", "Stats, Gen", "Math-Stats & Prob", "Stats, Othr"), 
+          YEAR >= 2010 ) %>% 
+  group_by(YEAR, LEVEL) %>% summarise(GRADUATES=sum(GRADUATES)) %>% 
+  ggplot(aes(x=YEAR,y=GRADUATES, col=LEVEL, shape=LEVEL)) + geom_line(size=gls) + geom_point(size=gps) + 
+  scale_y_continuous(limits=c(0,3500)) + ggtitle("US Stats Graduates by Year & Level") + labs(y="GRADUATES") 
+
+```
+
+Next, we look at the breakdown of awarded degrees in terms of programs. The following barplots present the proportion of graduates in Biostatistics, General Statistics, and Mathematical Statistics & Probability, at different levels in Canada and the US. At least 85% of undergraduate degrees are in General Statistics, but this proportion drops to around 65% for graduate degrees. In Canada, around 30% of graduate degrees are in Mathematical Statistics and Probability, whereas in the US this is replaced by Biostatistics. 
+
+```{r DegProgr, echo=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+grad %>% 
+  filter( PROGRAM %in% c("Biostats", "Stats, Gen", "Math-Stats & Prob"), 
+          YEAR == 2014 ) %>% 
+  group_by(LEVEL,PROGRAM) %>% 
+  summarise(GRADUATES=sum(GRADUATES, na.rm = TRUE)) %>% 
+  mutate( FREQUENCY = GRADUATES/sum(GRADUATES)) %>%
+  ggplot(aes(x=LEVEL,y=FREQUENCY, fill=PROGRAM)) + 
+  geom_bar(stat="identity")  + ggtitle("Canada - Stats Graduates by Program and Level") + labs(y="GRADUATES (%)")
+
+grad_us %>% 
+  filter( PROGRAM %in% c("Biostats", "Stats, Gen", "Math-Stats & Prob"), 
+          YEAR == 2014 ) %>% 
+  group_by(LEVEL,PROGRAM) %>% 
+  summarise(GRADUATES=sum(GRADUATES, na.rm = TRUE)) %>% 
+  mutate( FREQUENCY = GRADUATES/sum(GRADUATES)) %>%
+  ggplot(aes(x=LEVEL,y=FREQUENCY, fill=PROGRAM)) + 
+  geom_bar(stat="identity")  + ggtitle("US - Stats Graduates by Program and Level") + labs(y="GRADUATES (%)")
+
+
+```
+
+Lastly, we look at the composition of undergraduate enrolments by region and sex, for Statistics and its parent MCIS group. The barplots below show that Ontario has disproportionately more Statistics students, with 65% of the total in Canada. This is at the expense of Quebec and the Atlantic and Prairies provinces, which have a smaller share of students compared to Mathematics and Computer Science. The great news is that Statistics enrolments have gender parity, whereas for MCIS there are three males for every female.
+
+```{r EnrRegSex, echo=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+enrol %>% 
+  filter( PROGRAM %in% c("Biostats", "Stats, Gen", "Math-Stats & Prob"), 
+          YEAR == 2014, 
+          LEVEL == "BSc" ) %>% 
+  mutate(ENROLMENTS=ENROLMENTS/sum(ENROLMENTS)) %>%
+  group_by(SEX, REGION) %>% summarize(ENROLMENTS=sum(ENROLMENTS)) %>%
+  ggplot(aes(x=REGION, y=ENROLMENTS, fill=SEX)) + geom_bar(stat = "identity")+
+  scale_x_discrete(limits = c("Atlantic","BC","ON","Prairies","QC")) + 
+  scale_y_continuous(limits=c(0,.7)) + 
+  ggtitle("Stats BSc Enrolments by Region & Sex") + labs(y="ENROLMENTS (%)")
+  
+
+enrol_all %>% 
+  filter(PROGRAM == "MCIS", 
+         YEAR == 2015,
+         LEVEL == "BSc" ) %>%
+  mutate(ENROLMENTS=ENROLMENTS/sum(ENROLMENTS)) %>%
+  group_by(SEX, REGION) %>% summarize(ENROLMENTS=sum(ENROLMENTS)) %>%
+  ggplot(aes(x=REGION,y=ENROLMENTS, fill=SEX)) + geom_bar(stat="identity") +
+  scale_x_discrete(limits = c("Atlantic","BC","ON","Prairies","QC")) + 
+  scale_y_continuous(limits=c(0,.7)) + 
+  ggtitle("MCIS BSc Enrolments by Region & Sex") + labs(y="ENROLMENTS (%)")
+
+
+```
+
+
+#### Program Data 
+
+In this section we examine the structure of Statistics curricula in Canada. The 24 programs in the study are listed in the plot below, labeled by offering institution and grouped by region. The horizontal bars represent the number of required credits (equivalent to semester courses), broken down by core or elective requirement. The average program requires 25 courses, of which around 18 are core and 7 are electives. 
+
+```{r PrgmList, echo=FALSE, fig.width=6, fig.height=4, fig.show='hold'}
+
+
+# prog %>%
+#   group_by(TYPE, UNIVERSITY) %>% 
+#   summarise(CREDIT = sum(CREDIT)) %>% summarise( mean(CREDIT ))
+
+```
+
+Next, we examine the distribution of course requirements by discipline. The barplot on the left presents the average number of credits by discipline and type. Out of the 25 courses that are required, on average, roughly 13 are offered by Statistics, 9.5 by Mathematics, 1.5 by Computer Science, and 1 by other disciplines. The plot on the right shows the typical sequence of course requirements over the length of a program. The horizontal axis represents the level, or year, at which a requirement is offered, and the vertical axis represents the average number of credits across programs. It seems that most programs are heavy on mathematics courses in the first two years, after which they are dominated by statistics courses. Computer science courses are almost exclusively taken in the first year, and the same is true for courses from other disciplines. It is interesting to note that there is less than a single statistics course offered, on average, in the first year of the statistics programs.
+
+```{r CredDisc, echo=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+# Unlist requirements from multiple DISCIPLINEs
+prog_dis = prog %>%
+  mutate(CREDIT = CREDIT / sapply(DISCIPLINE, length) ) %>% 
+  unnest(DISCIPLINE) %>%
+  mutate(DISCIPLINE = factor(DISCIPLINE,
+                             levels = c("COMP", "MATH", "STAT", "OTHR"),
+                             labels = c("COMP", "MATH", "STAT", "OTHR") ))
+
+
+# Number of Courses by DISCIPLINE
+
+prog_dis %>% 
+  group_by(DISCIPLINE, TYPE) %>% 
+  summarize(CREDIT = sum(CREDIT)/24) %>% 
+  ggplot(aes(x=DISCIPLINE, y=CREDIT, fill=TYPE)) + 
+  geom_bar( stat = "identity", position = position_stack(reverse = TRUE)) + 
+  scale_x_discrete(limits = c("COMP", "MATH", "STAT", "OTHR") )  +
+  ggtitle("Number of Courses by DISCIPLINE") + labs(y="CREDIT", x="DISCIPLINE") 
+
+# Unlist requirements from multiple DISCIPLINEs & levels
+prog_dis_lev = prog %>% 
+  mutate(CREDIT = CREDIT / sapply(DISCIPLINE, length) ) %>% unnest(DISCIPLINE, .drop=FALSE) %>%
+  mutate(CREDIT = CREDIT / sapply(LEVEL, length) ) %>% unnest(LEVEL) %>% 
+  mutate(DISCIPLINE = factor(DISCIPLINE, levels=c("COMP","MATH","STAT","OTHR"))) %>% 
+  mutate(Level = factor(Level, levels=c("1","2","3","4"))) 
+
+# Average Number of Courses by DISCIPLINE and Level
+prog_dis_lev %>% 
+  group_by(DISCIPLINE, LEVEL) %>% 
+  summarise(CREDIT = sum(CREDIT)/24) %>% 
+  mutate(LEVEL = as.integer(LEVEL)) %>%  
+  ggplot(aes(x = LEVEL, y = CREDIT, col=DISCIPLINE, shape=DISCIPLINE)) + 
+  geom_line(size=1.5) + geom_point(size=5) +
+  scale_shape_manual(values=c(15,16,17,18)) + 
+  ggtitle("Average Credits by Discipline & Level") + 
+  labs(y="CREDIT", x="LEVEL") 
+```
+
+The offering discipline provides a relatively rough idea of what is covered in a course, as certain material can be offered under various course codes. For this reason, we created a new variable to describe the contents of a course. We used six descriptive topic categories, and an extra one for everything else, and we tagged each course requirement with one or more topic categories, based on its calendar description. The six topic categories we used are presented below, together with the five most frequent terms in their calendar descriptions. Our assignment is necessarily subjective, but the plot gives a better sense of what each category represents. 
+
+```{r WordCloud, message=FALSE, echo=FALSE, warning=FALSE, fig.width=8, fig.height=4, fig.show='hold'}
+library(tm)
+
+word_freq <- function(x, nwrds = 5){
+  docs = Corpus(VectorSource(x))
+  toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+  docs <- tm_map(docs, toSpace, "/")
+  docs <- tm_map(docs, toSpace, "@")
+  docs <- tm_map(docs, toSpace, "\\|")
+  # Convert the text to lower case
+  docs <- tm_map(docs, content_transformer(tolower))
+  # Remove numbers
+  docs <- tm_map(docs, removeNumbers)
+  # Remove english common stopwords
+  docs <- tm_map(docs, removeWords, stopwords("english"))
+  # Remove your own stop word
+  # specify your stopwords as a character vector
+  docs <- tm_map(docs, removeWords, c("statistics", "statistical", "course", "introduction",'students',"will")) 
+  # Remove punctuations
+  docs <- tm_map(docs, removePunctuation)
+  # Eliminate extra white spaces
+  docs <- tm_map(docs, stripWhitespace)
+  # Text stemming
+  # docs <- tm_map(docs, stemDocument)
+  
+  dtm <- TermDocumentMatrix(docs)
+  m <- as.matrix(dtm)
+  v <- sort(rowSums(m),decreasing=TRUE)
+  d <- data.frame(word = names(v),freq=v, stringsAsFactors = FALSE) %>% mutate( relfreq = freq / sum(freq))
+  fw = head(d, 5)
+  
+  wf <- head(d, nwrds)
+}
+
+temp = prog %>% 
+  filter(sapply(CATEGORY,length)==1) %>% 
+  mutate(CATEGORY = unlist(CATEGORY)) %>%
+  filter(CATEGORY %in% c("CS","MT","PT","SM","ST","SP"))
+
+ctg = c("CS","MT","PT","SM","ST","SP")
+ctg_title = c(CS="Computation (CS)", MT="Mathematics (MT)", PT="Probability (PT)", 
+              SM="Statistical Methodology (SM)", ST="Statistical Theory (ST)", SP="Statistical Practice (SP)")
+
+
+wf = vector(mode = 'list', length = 6)
+for(i in 1:6){
+  wf[[i]] = word_freq( temp %>% filter(CATEGORY==ctg[i]) %>% pull(Description) )
+}
+
+tibble( ctg_title, wf) %>% 
+  unnest(wf) %>% 
+  group_by(ctg_title) %>%
+  ggplot(aes(x=reorder(word, relfreq), y=relfreq*100)) + 
+  geom_bar(stat="identity", fill="steelblue") +
+#  scale_y_continuous(limits = c(0,7)) +
+  ylab("RELATIVE FREQUENCY (%)") + xlab("WORDS") +
+  coord_flip()+ facet_wrap(~ ctg_title, scales = "free", drop=TRUE) 
+
+```
+
+We now present the results of our course categorization. The barplot on the left shows the breakdown of course credits by topic category and discipline. All topics are almost exclusively offered by a single discipline, and the most interesting one is Probability. Although Probability Theory is a branch of (applied) Mathematics, it is primarily taught under a Statistics course code. This brings the average number of mathematics-related credits on par with statistics, at around 11 credits. The barplot on the right presents the number of credits per topic category, broken down by type. As we can see, there are a lot of Mathematics and Probability theory requirements 
+
+
+```{r TopicCat, message=FALSE, echo=FALSE, warning=FALSE, fig.width=4, fig.height=3, fig.show='hold'}
+
+# Average CREDIT by DISCIPLINE and Topic CATEGORY
+prog %>% 
+  mutate(CREDIT = CREDIT / sapply(DISCIPLINE, length) ) %>% 
+  unnest(DISCIPLINE, .drop=FALSE) %>%
+  mutate(CREDIT = CREDIT / sapply(CATEGORY, length) ) %>% 
+  unnest(CATEGORY) %>% 
+  mutate(DISCIPLINE = factor(DISCIPLINE, levels=c("COMP","MATH","STAT","OTHR"))) %>%
+  mutate(CATEGORY = factor(CATEGORY,levels = c("CS","MT","PT","SM","SP","ST","OT"))) %>%
+  group_by(DISCIPLINE, CATEGORY) %>% 
+  summarise( CREDIT = sum(CREDIT)/24  ) %>% 
+  ggplot(aes(x=DISCIPLINE, y=CREDIT, fill=CATEGORY)) + geom_bar(stat = "identity") +
+  ggtitle("CREDIT by DISCIPLINE & CATEGORY") + 
+  labs(y="CREDIT", x="DISCIPLINE") +
+  scale_fill_discrete(name="TOPIC \n CATEGORY",
+                      breaks=c("CS","MT","PT","SM","SP","ST","OT"),
+                                            labels=c("Computation","Mathematics","Probability","Stat Methodology","Stat Practice","Stat Theory","Other"))
+
+# prog %>% 
+#   mutate(CREDIT = CREDIT / sapply(CATEGORY, length) ) %>% 
+#   unnest(CATEGORY) %>% 
+#   group_by(CATEGORY) %>%
+#   summarise(CREDIT = sum(CREDIT)/24) %>% 
+#   select(CATEGORY, CREDIT) 
+
+# Average CREDIT by TYPE and Topic CATEGORY
+
+prog %>% 
+  mutate(CREDIT = CREDIT / sapply(CATEGORY, length) ) %>% 
+  unnest(CATEGORY) %>% 
+  mutate(CATEGORY = factor(CATEGORY,levels = c("CS","MT","PT","SM","SP","ST","OT"))) %>%
+  group_by(TYPE, CATEGORY) %>% 
+  summarise( CREDIT = sum(CREDIT)/24  ) %>% 
+  ggplot(aes(x=CATEGORY, y=CREDIT, fill=TYPE)) + 
+  geom_bar(stat = "identity") +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  ggtitle("CREDIT by CATEGORY & TYPE") + 
+  labs(y="CREDIT", x="TOPIC CATEGORY") +
+  scale_x_discrete(name="TOPIC CATEGORY",
+                   breaks=c("CS","MT","PT","SM","SP","ST","OT"))
+
+
+```
+
+
+
+
+## Summary and Conclusions
+
+Statistics education is experiencing a period of rapid growth, with university enrolments increasing at double-digit rates. The majority of statisticians in Canada enter the profession from Bachelor programs, which has important implications for what and how we teach our undergrads. Ontario has a higher proportion of statistics students compared to other provinces, but the gender ratio in the discipline is balanced. In terms of undergraduate programs, most curricula have extensive Mathematical components and a relatively theoretical focus. There are typically few courses in Statistics during the first two years of study, and after that the emphasis is on statistical methodology and theory.
+
+Given our results, and the role undergraduate education plays in preparing students for the Statistics profession, we make three broad recommendations for undergraduate curricula: 
+1. _Offer more statistics courses_. Statistical topics, rather than mathematical ones, should constitute the majority of the curriculum.  
+2. _Offer statistics courses early on_. Students should be introduced to the main concepts and uses of Statistics right from the start, and they should continue to refine them throughout their studies.
+3. _Place more emphasis on Statistical practice_. Students should be given multiple opportunities to apply Statistics in real settings and develop relevant communication, collaboration, and computing skills. 
+
+
+#### Acknowledgements 
+
+We would like to thank Olivia Rennie for her excellent research support in collecting program data. 
